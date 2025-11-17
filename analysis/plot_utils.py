@@ -691,3 +691,136 @@ def plot_benchmark_subplots_vs_budget(
     plt.tight_layout()
     plt.savefig(output_path, dpi=dpi, bbox_inches="tight")
     plt.show()
+
+
+def plot_keyword_comparison_by_model(
+    df: pd.DataFrame,
+    keywords: list[str] = None,
+    model_mapping: dict[str, str] = None,
+    output_path: str = "outputs/fig_keyword_comparison.png",
+    figsize: tuple = (16, 12),
+    dpi: int = 300,
+) -> None:
+    """
+    Create subplots showing average performance for different keywords, one subplot per model.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame with Model, Keyword, and Average columns
+    keywords : list[str], optional
+        List of keywords to compare. Defaults to ["Wait", "Perhaps", "Let"]
+    model_mapping : dict[str, str], optional
+        Mapping of original model names to display names. Defaults to MODEL_NAME_MAPPING
+    output_path : str, optional
+        Path to save the figure
+    figsize : tuple, optional
+        Figure size as (width, height)
+    dpi : int, optional
+        Resolution for saved figure
+    """
+    if keywords is None:
+        keywords = ["Wait", "Perhaps", "Let"]
+    if model_mapping is None:
+        model_mapping = MODEL_NAME_MAPPING
+
+    models_list = df["Model"].unique()
+    num_models = len(models_list)
+
+    # Determine subplot layout
+    if num_models <= 2:
+        nrows, ncols = 1, num_models
+        if figsize == (16, 12):
+            figsize = (8 * num_models, 6)
+    elif num_models <= 4:
+        nrows, ncols = 2, 2
+        if figsize == (16, 12):
+            figsize = (14, 10)
+    else:
+        nrows = (num_models + 1) // 2
+        ncols = 2
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
+
+    # Handle single subplot case
+    if num_models == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten()
+
+    # Calculate global y-axis range for consistency
+    all_averages = df["Average"].dropna().values
+    if len(all_averages) > 0:
+        y_min = max(0, np.floor(all_averages.min() / 5) * 5 - 5)
+        y_max = min(100, np.ceil(all_averages.max() / 5) * 5 + 5)
+    else:
+        y_min, y_max = 0, 100
+
+    # Color scheme for keywords
+    keyword_colors = {
+        "Wait": "#3498db",
+        "Perhaps": "#e74c3c",
+        "Let": "#2ecc71",
+    }
+
+    for idx, model in enumerate(models_list):
+        ax = axes[idx]
+        model_data = df[df["Model"] == model]
+
+        # Get average scores for each keyword
+        keyword_scores = []
+        keyword_labels = []
+        colors_list = []
+
+        for keyword in keywords:
+            keyword_data = model_data[model_data["Keyword"] == keyword]
+            if len(keyword_data) > 0:
+                avg_score = keyword_data["Average"].mean()
+                keyword_scores.append(avg_score)
+                keyword_labels.append(keyword)
+                colors_list.append(keyword_colors.get(keyword, "#95a5a6"))
+
+        x = np.arange(len(keyword_labels))
+        bars = ax.bar(
+            x,
+            keyword_scores,
+            width=0.6,
+            color=colors_list,
+            alpha=0.8,
+            edgecolor="black",
+            linewidth=1.5,
+        )
+
+        # Add value labels on bars
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                f"{height:.1f}",
+                ha="center",
+                va="bottom",
+                fontsize=11,
+                fontweight="bold",
+            )
+
+        # Get pretty model name
+        pretty_name = model_mapping.get(model, model)
+        ax.set_title(pretty_name, fontsize=14, fontweight="bold", pad=15)
+        ax.set_xlabel("Keyword", fontsize=12, fontweight="bold")
+        ax.set_ylabel("Average Score (%)", fontsize=12, fontweight="bold")
+        ax.set_xticks(x)
+        ax.set_xticklabels(keyword_labels, fontsize=11)
+        ax.set_ylim(y_min, y_max)
+        ax.grid(axis="y", alpha=0.3, linestyle="--")
+        ax.tick_params(axis="y", labelsize=10)
+
+    # Hide unused subplots if any
+    total_subplots = nrows * ncols
+    if num_models < total_subplots:
+        for idx in range(num_models, total_subplots):
+            axes[idx].set_visible(False)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=dpi, bbox_inches="tight")
+    plt.show()
