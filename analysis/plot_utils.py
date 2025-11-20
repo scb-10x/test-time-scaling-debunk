@@ -540,12 +540,7 @@ def plot_average_score_vs_budget(
     budget_vals = df["Budget"].dropna().sort_values().unique()
     plt.xticks(
         budget_vals,
-        [
-            r"$2^{%d}$" % int(np.log2(x))
-            if x > 0 and np.log2(x).is_integer()
-            else str(x)
-            for x in budget_vals
-        ],
+        [f"{int(x):,}" if x >= 1000 else str(int(x)) for x in budget_vals],
         rotation=0,
         fontsize=11,
     )
@@ -668,12 +663,7 @@ def plot_benchmark_subplots_vs_budget(
         budget_vals = df["Budget"].dropna().sort_values().unique()
         ax.set_xticks(budget_vals)
         ax.set_xticklabels(
-            [
-                r"$2^{%d}$" % int(np.log2(x))
-                if x > 0 and np.log2(x).is_integer()
-                else str(x)
-                for x in budget_vals
-            ],
+            [f"{int(x):,}" if x >= 1000 else str(int(x)) for x in budget_vals],
             rotation=0,
             fontsize=10,
         )
