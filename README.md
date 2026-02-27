@@ -1,5 +1,9 @@
 # Budget Forcing: A Test-Time Scaling Analysis
 
+**This repository is archived and released as-is. If you’re interested in this work, please contact us.**
+
+---
+
 This repository hosts analysis scripts and experimental data for investigating budget forcing, a test-time scaling technique for reasoning models.
 
 ## Overview
